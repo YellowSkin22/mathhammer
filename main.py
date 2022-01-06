@@ -6,8 +6,6 @@ from math import comb
 
 
 
-# github test line 
-
 # functions
 # calculate expected damage output
 
@@ -79,6 +77,18 @@ def feel_no_pain(fnp):
     
     return (1 - (( 7 - fnp) / 6))
 
+def exploding_hits(hitp, exploding_5, exploding_6):
+    if exploding_5 == True:
+        hitp = hitp + 2/6
+    
+    if exploding_6 == True and exploding_5 == False:
+        hitp = hitp + 1/6
+        
+    else: hitp = hitp 
+    
+    return hitp
+        
+
 
 # set general layout
 st.set_page_config(layout="wide")
@@ -105,8 +115,8 @@ hit_rr_1 = st.sidebar.checkbox("Reroll ones to hit")
 hit_rr_all = st.sidebar.checkbox("Reroll all to hit")
 wound_rr_1 = st.sidebar.checkbox("Reroll ones to wound")
 wound_rr_all = st.sidebar.checkbox("Reroll all to wound")
-exploding_6 = st.sidebar.checkbox("Exploding 6s (inactive)")
-exploding_5 = st.sidebar.checkbox("Exploding 5s (inactive)")
+exploding_6 = st.sidebar.checkbox("Exploding 6s")
+exploding_5 = st.sidebar.checkbox("Exploding 5s")
 
 
 if hit_rr_1 == True and hit_rr_all == True:
@@ -126,6 +136,8 @@ fnp = st.sidebar.slider("Feel No Pain value", min_value=0, max_value=6, value=0,
 
 # transform input to probability
 hitp = hit_probability(hit_roll, hit_rr_1, hit_rr_all)
+hitp = exploding_hits(hitp, exploding_5, exploding_6) # adjust for exploding hits
+
 missp = 1 - hitp
 
 total_attacks = attacks * attacker_models
