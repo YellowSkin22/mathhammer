@@ -88,7 +88,25 @@ def exploding_hits(hitp, exploding_5, exploding_6):
     
     return hitp
         
-
+def basic_probability(hit_roll, strength, toughness, save, ap):
+    hitp = (7 - hit_roll) / 6
+    
+    if strength >= (2 * toughness):
+        woundp = 5/6
+    elif strength > toughness:
+        woundp = 4/6
+    elif strength == toughness:
+        woundp = 3/6
+    elif (2 * strength)  <= toughness:
+        woundp = 1/6
+    else:
+        woundp = 2/6
+        
+    savep = save_chance(save, ap)
+    
+    probability = round(hitp * woundp * savep * 100, 1)
+    return probability
+    
 
 # set general layout
 st.set_page_config(layout="wide")
@@ -127,7 +145,7 @@ if wound_rr_1 == True and wound_rr_all == True:
 
 st.sidebar.subheader("Defender values")
 defender_name = st.sidebar.text_input("Unit name of the defender", "Defender")
-defender_models = st.sidebar.number_input("Number of target models", min_value=1, value=10, step=1)
+defender_models = st.sidebar.number_input("Number of target models", min_value=1, value=1, step=1)
 toughness = st.sidebar.number_input("Toughness value", min_value=1, max_value=15, value=1)
 wounds = st.sidebar.number_input("Wounds value", min_value=1, max_value=25, value=1)
 save = st.sidebar.slider("(Invul)save value", min_value=2, max_value=6, value=4, step=1)
@@ -208,23 +226,30 @@ with metrics:
         
     with column_2:
         
+        st.metric(label='Placeholder',
+                  value=0)
+        #df_filtered = df_probability[df_probability.min_damage == total_wounds]
+        # kill_chance = df_filtered.atleast.iloc[0]
         
-        df_filtered = df_probability[df_probability.min_damage == total_wounds]
-        kill_chance = df_filtered.atleast.iloc[0]
         
-        
-        st.metric(label='Probability of kill', value="{}%".format(round(kill_chance * 100,1)))
+        #st.metric(label='Probability of kill', value="{}%".format(round(kill_chance * 100,1)))
         
     with column_3:
         st.metric(label='Metric TBD', value=0)
     
 
 with visualisations: 
+    
+    chart, table = st.columns(2)
+
+with chart:
     st.header("Probability Chart")
     
     
     # set x axis range
-    slider_range = st.slider("Select chart range", value=[0,30])
+    slider_range = st.slider(label="Select chart range", 
+                             value=[0,total_attacks],
+                             max_value=total_attacks)
     min_x = slider_range[0]
     max_x = slider_range[1]
     
@@ -237,7 +262,7 @@ with visualisations:
     fig1, ax = plt.subplots()
         
     ax.plot(x1, y, color='deepskyblue', linewidth=2, linestyle='-')
-    ax.plot(x2, y, color='red', linewidth=2, linestyle=':')
+    ax.plot(x2, y, color='green', linewidth=2, linestyle=':')
     
     fig_name = "{} {} vs {} {}".format(attacker_models, attacker_name, defender_models, defender_name)
         
@@ -276,7 +301,35 @@ with visualisations:
     ax.tick_params(color='white')
 
     st.pyplot(fig=fig1)
+
+with table: 
     
+    st.header("Probability Table")
+    st.write("Probability of succesfully reaching the damagestep for a single attack")
+    
+    df_probtable = pd.DataFrame()
+    
+    save_list = [2,3,4,5,6]
+    toughness_list = [3, 4, 5, 6, 7, 8, 9, 10, 11]
+    
+    # opbouw per kolom?
+    
+    df_probtable['toughness'] = toughness_list
+    df_probtable['2+'] = df_probtable.apply(lambda row: basic_probability(hit_roll, strength, row['toughness'], 2, ap), axis=1)
+    df_probtable['3+'] = df_probtable.apply(lambda row: basic_probability(hit_roll, strength, row['toughness'], 3, ap), axis=1)
+    df_probtable['4+'] = df_probtable.apply(lambda row: basic_probability(hit_roll, strength, row['toughness'], 4, ap), axis=1)
+    df_probtable['5+'] = df_probtable.apply(lambda row: basic_probability(hit_roll, strength, row['toughness'], 5, ap), axis=1)
+    df_probtable['6+'] = df_probtable.apply(lambda row: basic_probability(hit_roll, strength, row['toughness'], 6, ap), axis=1)
+    
+    
+    
+    #dataframe formatting
+    df_probtable.set_index(['toughness'],
+                           inplace=True)
+    
+    
+    
+    st.dataframe(df_probtable)
 
 
 
